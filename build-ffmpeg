@@ -465,7 +465,14 @@ if build "svt-av1"; then
 		perl -p0i -e 's/(?<=\n)(\s*?)toolchain=\*\)\n.*?\n\1    ;;\n//sm' build.sh
 	fi
 
-	CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_LIBDIR:PATH=lib" execute ./build.sh "prefix=${WORKSPACE}" static release install
+	SVT_AV1_CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_LIBDIR:PATH=lib"
+
+	# Increase pthread stack size for musl libc
+	if command_exists ldd && ldd /bin/ls | grep -q musl; then
+		SVT_AV1_CMAKE_EXTRA_FLAGS+=" -DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,stack-size=2097152"
+	fi
+
+	CMAKE_EXTRA_FLAGS="$SVT_AV1_CMAKE_EXTRA_FLAGS" execute ./build.sh "prefix=${WORKSPACE}" static release install
 
 	build_done "svt-av1"
 fi
@@ -477,7 +484,14 @@ if build "svt-hevc"; then
 
 	sed -i.backup 's/  check_executable sudo/  \# check_executable sudo/' build.sh
 
-	CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_LIBDIR:PATH=lib" execute ./build.sh "prefix=${WORKSPACE}" static release install
+	SVT_HEVC_CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_LIBDIR:PATH=lib"
+
+	# Increase pthread stack size for musl libc
+	if command_exists ldd && ldd /bin/ls | grep -q musl; then
+		SVT_HEVC_CMAKE_EXTRA_FLAGS+=" -DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,stack-size=2097152"
+	fi
+
+	CMAKE_EXTRA_FLAGS="$SVT_HEVC_CMAKE_EXTRA_FLAGS" execute ./build.sh "prefix=${WORKSPACE}" static release install
 
 	build_done "svt-hevc"
 fi
@@ -741,6 +755,11 @@ hevc_patch=$(ls $PACKAGES/svt-hevc-*/ffmpeg_plugin/0001-lavc-svt_hevc-add-libsvt
 if patch -f --dry-run -p1 -i $hevc_patch >/dev/null; then
 	echo "Applying SVT-HEVC patch"
 	patch -p1 -i $hevc_patch
+fi
+
+# Increase pthread stack size for musl libc
+if command_exists ldd && ldd /bin/ls | grep -q musl; then
+	EXTRA_LDFLAGS+=" -Wl,-z,stack-size=2097152"
 fi
 
 # shellcheck disable=SC2086
