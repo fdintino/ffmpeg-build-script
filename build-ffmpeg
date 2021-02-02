@@ -137,7 +137,11 @@ execute () {
 
 build () {
 	echo ""
-	echo "building $1"
+	if [ -n "$IS_GHA" ]; then
+		echo "::group::Building $1"
+	else
+		echo "Building $1"
+	fi
 	echo "======================="
 
 	if [ -f "$PACKAGES/$1.done" ]; then
@@ -168,6 +172,9 @@ library_exists () {
 
 build_done () {
 	touch "$PACKAGES/$1.done"
+	if [ -n "$IS_GHA" ]; then
+		echo "::endgroup::"
+	fi
 }
 
 cleanup () {
@@ -794,6 +801,8 @@ INSTALL_FOLDER="/usr/bin"
 if [[ "$OSTYPE" == "darwin"* ]]; then
 INSTALL_FOLDER="/usr/local/bin"
 fi
+
+echo "::endgroup::"
 
 echo ""
 echo "Building done. The following binaries can be found here:"
