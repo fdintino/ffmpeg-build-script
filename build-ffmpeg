@@ -145,6 +145,7 @@ build () {
 	echo ""
 	if [ -n "$IS_GHA" ]; then
 		echo "::group::Building $1"
+        set -x
 	else
 		echo "Building $1"
 	fi
@@ -180,6 +181,7 @@ build_done () {
 	touch "$PACKAGES/$1.done"
 	if [ -n "$IS_GHA" ]; then
 		echo "::endgroup::"
+        set +x
 	fi
 }
 
@@ -272,7 +274,7 @@ if command_exists ldd && ldd /bin/ls | grep -q musl; then
 fi
 
 export PATH="${WORKSPACE}/bin:$PATH"
-PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig"
+PKG_CONFIG_PATH="${WORKSPACE}/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH:/usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig"
 PKG_CONFIG_PATH+=":/usr/local/share/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig:/usr/lib64/pkgconfig"
 export PKG_CONFIG_PATH
 
@@ -541,7 +543,7 @@ if command_exists python3; then
 			-Denable_float=true
 		execute ninja -vC libvmaf/build install
 		if [[ "$OSTYPE" == "darwin"* ]]; then
-			perl -pi -e 's/^(Libs\.private: \-lm)$/$1 -lstdc++/' $WORKSPACE/lib/pkgconfig/libvmaf.pc
+			perl -pi -e 's/^(Libs: [^\n]+)$/$1 -lstdc++/' $WORKSPACE/lib/pkgconfig/libvmaf.pc
 		fi
 		build_done "vmaf"
 	fi
@@ -578,7 +580,7 @@ if command_exists python3; then
 			fi
 		fi
 		download "https://code.videolan.org/videolan/dav1d/-/archive/0.8.1/dav1d-0.8.1.tar.gz"
-		execute meson . build \
+		meson . build \
 			"--prefix=${WORKSPACE}" \
 			--default-library=static \
 			--buildtype=release
