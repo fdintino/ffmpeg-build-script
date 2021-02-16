@@ -556,8 +556,7 @@ if command_exists cargo; then
 		if ! command_exists cargo-cbuild; then
 			execute cargo install "--root=$WORKSPACE" cargo-c
 		fi
-		execute cargo cbuild --release --library-type=staticlib
-		execute cargo cinstall "--prefix=$WORKSPACE"
+		execute cargo cinstall --release --library-type=staticlib "--prefix=$WORKSPACE"
 		if [ -n "$LDEXEFLAGS" ]; then
 			sed -i.backup 's/-lgcc_s/-lgcc_eh/g' "${WORKSPACE}/lib/pkgconfig/rav1e.pc"
 		fi
