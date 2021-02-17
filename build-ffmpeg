@@ -972,9 +972,12 @@ if command_exists ldd && ldd /bin/ls | grep -q musl; then
   EXTRA_LDFLAGS+=" -Wl,-z,stack-size=2097152"
 fi
 
+if [[ "$OSTYPE" != "darwin"* ]]; then
+  CONFIGURE_OPTIONS+=("--enable-hardcoded-tables")
+fi
+
 # shellcheck disable=SC2086
 execute ./configure "${CONFIGURE_OPTIONS[@]}" \
-  --enable-hardcoded-tables \
   --disable-autodetect \
   --enable-decoders \
   --enable-encoders \
